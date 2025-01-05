@@ -16,6 +16,8 @@ from pydantic import ConfigDict, Field, SecretStr, model_validator
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+BASE_URL = "https://api.pipeshift.com/api/v0/completions"
 
 class Pipeshift(LLM):
     """LLM models from `Pipeshift`.
@@ -34,7 +36,7 @@ class Pipeshift(LLM):
             model = Pipeshift(model_name="meta-llama/Meta-Llama-3-8B-Instruct")
     """
 
-    base_url: str = "https://api.pipeshift.com/api/v0/completions"
+    base_url: str = BASE_URL
     """Base completions API URL."""
     pipeshift_api_key: SecretStr = Field(
         alias="api_key",
@@ -82,6 +84,12 @@ class Pipeshift(LLM):
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Any:
+        """Validate if model exists."""
+        if values.get("model") is None:
+            warnings.warn(
+                "'model' is a required argument."
+            )
+            values["model"] = DEFAULT_MODEL  # Default Value
         """Validate max_tokens exists."""
         if values.get("max_tokens") is None:
             warnings.warn(
